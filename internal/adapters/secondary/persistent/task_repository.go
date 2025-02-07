@@ -47,6 +47,7 @@ func(r *TaskRepository) FindByID(id uint) (*entity.Task, error) {
 }
 
 func (r *TaskRepository) FindByUserID(userID uint) ([]entity.Task, error) {
+    
     var tasks []entity.Task
     
     // Get tasks with their subtasks 
@@ -157,6 +158,12 @@ func (r *TaskRepository) deleteSubTasks(tx *gorm.DB, taskID uint) error {
     }
 
     return nil
+}
+
+func (r *TaskRepository) IsTaskExistByID(id uint) bool {
+    var count int64
+    r.db.Model(&entity.Task{}).Where("id = ?", id).Count(&count)
+    return count > 0
 }
 
 

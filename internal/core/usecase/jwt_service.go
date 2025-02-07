@@ -1,12 +1,11 @@
 package usecase
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/hafiztri123/internal/core/response"
 	"github.com/hafiztri123/pkg/config"
-	"github.com/rs/zerolog/log"
 )
 
 type JWTService struct {
@@ -38,8 +37,7 @@ func (j *JWTService) GenerateToken(userID uint) (string, error) {
 	tokenString, err := token.SignedString([]byte(j.config.SecretKey))
 
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to generate token")
-		return "", err
+		return "", response.NewAppError("500", "Failed to generate token")
 	}
 
 	return tokenString, nil
@@ -48,20 +46,19 @@ func (j *JWTService) GenerateToken(userID uint) (string, error) {
 func(j *JWTService) ValidateToken(tokenString string) (*JWTClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			return nil, response.NewAppError("401", "Invalid signing method")
 		}
 
 		return []byte(j.config.SecretKey), nil
 	})
 
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to parse token")
-		return nil, err
+		return nil, response.NewAppError("401", "Invalid token")
 	}
 
 	claims, ok := token.Claims.(*JWTClaims)
 	if !ok || !token.Valid {
-		return nil, fmt.Errorf("invalid token")
+		return nil, response.NewAppError("401", "Invalid token")
 	}
 	
 	return claims, nil

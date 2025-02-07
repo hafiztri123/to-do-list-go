@@ -21,3 +21,9 @@ func (r *UserRepository) FindById(id uint) (*entity.User, error) {
 	}
 	return &user, nil
 }
+
+func(r *UserRepository) IsUserExistByID(id uint) bool {
+	var count int64
+	r.db.Model(&entity.User{}).Where("id = ?", id).Count(&count)
+	return count > 0
+}

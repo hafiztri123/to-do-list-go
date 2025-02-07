@@ -133,8 +133,10 @@ func setupJWT() *usecase.JWTService {
 
 func createTaskHandler(db *gorm.DB) *http.TaskHandler {
 
-	repo := persistent.NewTaskRepository(db)
-	service := usecase.NewTaskService(repo)
+	taskRepo := persistent.NewTaskRepository(db)
+	userRepo := persistent.NewUserRepository(db)
+
+	service := usecase.NewTaskService(taskRepo, userRepo)
 	handler := http.NewTaskHandler(service)
 	return handler
 }

@@ -1,8 +1,6 @@
 package persistent
 
 import (
-	"errors"
-	"fmt"
 
 	"github.com/hafiztri123/internal/core/entity"
 	"gorm.io/gorm"
@@ -19,21 +17,8 @@ func NewAuthRepository (db *gorm.DB) *AuthRepository {
 
 
 
-// auth_repository.go
-func (a *AuthRepository) Register(user *entity.User) error  {
-    existingUser, err := a.FindByEmail(user.Email)
-    
-    // If we found a user (no error), then it's a duplicate
-    if err == nil && existingUser != nil {
-        return fmt.Errorf("user with email %s already exists", user.Email)
-    }
-    
-    // If error is anything other than "record not found", it's a real error
-    if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-        return fmt.Errorf("error checking existing user: %w", err)
-    }
+func (a *AuthRepository) Create(user *entity.User) error  {
 
-    // At this point, we know the email doesn't exist, so create the user
     result := a.db.Create(user)
     if result.Error != nil {
         return result.Error
@@ -47,6 +32,11 @@ func (a *AuthRepository) FindByEmail(email string) (*entity.User, error) {
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return &user, nil
-	
+	return &user, nil	
+}
+
+func (a *AuthRepository) IsEmailExist(email string) bool {
+	var count int64
+	a.db.Model(&entity.User{}).Where("email = ?", email).Count(&count)
+	return count > 0
 }

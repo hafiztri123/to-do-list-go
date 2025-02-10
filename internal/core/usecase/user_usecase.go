@@ -17,7 +17,7 @@ func NewUserService(repo persistent.UserRepository) *UserService {
 func(u *UserService) FindById(id uint) (*entity.User, error) {
 	user, err := u.repo.FindById(id)
 	if err != nil {
-		return nil, response.NewAppError("404", "User not found")
+		return nil, response.NewAppError(404, "User not found")
 	}
 	return user, nil
 }

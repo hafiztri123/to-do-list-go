@@ -7,7 +7,7 @@ import (
 
 type AppResponse[T any] struct {
 	Sucess 	bool		`json:"success"`
-	Code 	string 		`json:"code"`
+	Code 	int 		`json:"code"`
 	Message string 		`json:"message"`
 	Data 	*T 			`json:"data"`
 	Date 	time.Time 	`json:"date"`
@@ -15,7 +15,7 @@ type AppResponse[T any] struct {
 
 type AppError struct {
 	Success bool
-	Code string
+	Code int
 	Message string
 	Date time.Time
 }
@@ -25,7 +25,7 @@ func (e *AppError) Error() string {
 	return fmt.Sprintf("Code: %s, Message: %s, Date: %v", e.Code, e.Message, e.Date)
 }
 
-func NewAppError(code, message string) *AppError {
+func NewAppError(code int, message string) *AppError {
     return &AppError{
 		Success: false,
         Code:    code,
@@ -34,7 +34,7 @@ func NewAppError(code, message string) *AppError {
     }
 }
 
-func NewSuccessResponse[T any](data T, code, message string) AppResponse[T] {
+func NewSuccessResponse[T any](data T, code int, message string) AppResponse[T] {
 	return AppResponse[T]{
 		Sucess: true,
 		Code: code,

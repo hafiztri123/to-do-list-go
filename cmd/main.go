@@ -17,7 +17,10 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
+	"github.com/gin-contrib/cors"
 )
+
+const BASE_URL = "/api/v1"
 
 func main() {
 	setupZeroLog()
@@ -36,15 +39,18 @@ func main() {
 	jwt := setupJWT()
 	authHandler := createAuthHandler(gormDB, jwt)
 	taskHandler := createTaskHandler(gormDB)
-
+	categoryHandler := createCategoryHandler(gormDB)
 
 
 	router := gin.Default()
 	router.Use(middleware.Logger())
 	router.Use(gin.Recovery())
+	corsSetting := setupCors()
+	router.Use(cors.New(corsSetting))
 
 	setupAuthRoutes(router, authHandler)
 	setupTaskRoutes(router, taskHandler, jwt)
+	setupCategoryRoutes(router, categoryHandler, jwt)
 
 	placeholderRoutes(router, jwt)
 
@@ -78,23 +84,39 @@ func createAuthHandler(db *gorm.DB, jwt *usecase.JWTService) *http.AuthHandler {
 }
 
 func setupAuthRoutes(router *gin.Engine, handler *http.AuthHandler) {
-	router.POST("/register", handler.Register)
-	router.POST("/login", handler.Login)
+	auth := router.Group(BASE_URL + "/auth")
+	{
+		auth.POST("/register", handler.Register)
+		auth.POST("/login", handler.Login)
+	}
+
 }
 
 func setupTaskRoutes(router *gin.Engine, handler *http.TaskHandler, jwt *usecase.JWTService) {
-	protected := router.Group("")
+	protected := router.Group(BASE_URL + "/tasks") 
 	protected.Use(middleware.AuthMiddleware(jwt))
 	{
-		protected.POST("/tasks", handler.CreateTask)
-		protected.GET("/tasks", handler.GetUserTasks)
-		protected.GET("/tasks/:task_id/subtasks", handler.GetSubTasks)
-		protected.PUT("/tasks/:task_id", handler.UpdateTask)
-		protected.DELETE("/tasks/:task_id", handler.DeleteTask)
+		protected.POST("", handler.CreateTask)
+		protected.GET("", handler.GetUserTasks)
+		protected.GET("/:task_id/subtasks", handler.GetSubTasks)
+		protected.PUT("/:task_id", handler.UpdateTask)
+		protected.DELETE("/:task_id", handler.DeleteTask)
+		protected.GET("/category/:category_id", handler.GetTaskByCategory)
+		protected.GET("/non-category", handler.GetNonCategoryTasks)
 
 	}
 	
 
+}
+
+func setupCategoryRoutes(router *gin.Engine, handler *http.CategoryHandler, jwt *usecase.JWTService) {
+	protected := router.Group(BASE_URL + "/category")
+	protected.Use(middleware.AuthMiddleware(jwt))
+	{
+		protected.POST("", handler.CreateCategory)
+		protected.GET("", handler.GetAllCategory)
+		protected.DELETE("/:category_id", handler.DeleteCategory)
+	}
 }
 
 func placeholderRoutes(router *gin.Engine, jwt *usecase.JWTService) {
@@ -139,4 +161,22 @@ func createTaskHandler(db *gorm.DB) *http.TaskHandler {
 	service := usecase.NewTaskService(taskRepo, userRepo)
 	handler := http.NewTaskHandler(service)
 	return handler
+}
+
+func createCategoryHandler(db *gorm.DB) *http.CategoryHandler {
+
+	categoryRepo := persistent.NewCategoryRepository(db)
+	service := usecase.NewCategoryService(categoryRepo)
+	handler := http.NewCategoryHandler(service)
+	return handler
+}
+
+func setupCors() cors.Config{
+	return cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"}, 
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}
 }

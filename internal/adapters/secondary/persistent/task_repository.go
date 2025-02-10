@@ -1,6 +1,7 @@
 package persistent
 
 import (
+
 	"github.com/hafiztri123/internal/core/entity"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
@@ -66,6 +67,32 @@ func (r *TaskRepository) FindByUserID(userID uint) ([]entity.Task, error) {
     
     return tasks, nil
 }
+
+
+func (r *TaskRepository) FindNonCategoryTask(userID uint) ([]entity.Task, error) {
+    var tasks []entity.Task
+    result := r.db.Where("category_id IS NULL AND parent_id IS NULL AND user_id = ?", userID).Find(&entity.Task{}).Find(&tasks)
+
+    if result.Error != nil {
+        return nil, result.Error
+    }
+
+    return tasks, nil
+
+}
+
+func (r *TaskRepository) FindByCategoryIDAndUserID(categoryID uint64, userID uint) ([]entity.Task, error) {
+    var tasks []entity.Task
+
+    result := r.db.Where("category_id = ? AND parent_id IS NULL AND user_id = ?", categoryID, userID ).Find(&tasks)
+    if result.Error != nil {
+        return nil, result.Error
+    }
+
+    return tasks, nil
+
+}
+
 func (r *TaskRepository) FindSubTasks(taskID uint) ([]entity.Task, error) {
     var tasks []entity.Task
     
@@ -136,6 +163,7 @@ func (r *TaskRepository) Delete(id uint) error {
         return nil
     })
 }
+
 
 
 

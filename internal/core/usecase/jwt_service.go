@@ -37,7 +37,7 @@ func (j *JWTService) GenerateToken(userID uint) (string, error) {
 	tokenString, err := token.SignedString([]byte(j.config.SecretKey))
 
 	if err != nil {
-		return "", response.NewAppError("500", "Failed to generate token")
+		return "", response.NewAppError(500, "Failed to generate token")
 	}
 
 	return tokenString, nil
@@ -46,19 +46,19 @@ func (j *JWTService) GenerateToken(userID uint) (string, error) {
 func(j *JWTService) ValidateToken(tokenString string) (*JWTClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, response.NewAppError("401", "Invalid signing method")
+			return nil, response.NewAppError(401, "Invalid signing method")
 		}
 
 		return []byte(j.config.SecretKey), nil
 	})
 
 	if err != nil {
-		return nil, response.NewAppError("401", "Invalid token")
+		return nil, response.NewAppError(401, "Invalid token")
 	}
 
 	claims, ok := token.Claims.(*JWTClaims)
 	if !ok || !token.Valid {
-		return nil, response.NewAppError("401", "Invalid token")
+		return nil, response.NewAppError(401, "Invalid token")
 	}
 	
 	return claims, nil

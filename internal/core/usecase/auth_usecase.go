@@ -20,7 +20,7 @@ func NewAuthService(authrepo *persistent.AuthRepository) *AuthService {
 
 func (a *AuthService) Register(user *entity.User) error {
     if a.authRepo.IsEmailExist(user.Email){
-        return response.NewAppError("400", "Email already exists")
+        return response.NewAppError(400, "Email already exists")
     }
 
 
@@ -34,7 +34,7 @@ func (a *AuthService) Register(user *entity.User) error {
 func (a *AuthService) FindByEmail(email string) (*entity.User, error) { 
     user, err := a.authRepo.FindByEmail(email)
     if err != nil {
-        return nil, response.NewAppError("404", err.Error())
+        return nil, response.NewAppError(404, err.Error())
     }
     return user, nil
 }

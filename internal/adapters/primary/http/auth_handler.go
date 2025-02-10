@@ -29,7 +29,7 @@ func (a *AuthHandler) Register(c *gin.Context) {
 
     hashedPassword, err := hashingPassword(req.Password)
     if err != nil {
-        c.JSON(500, err)
+        c.JSON(errorCode(err), err)
         return
     }
 
@@ -40,11 +40,11 @@ func (a *AuthHandler) Register(c *gin.Context) {
     }
 
     if err := a.service.Register(user); err != nil {
-        c.JSON(400, err)
+        c.JSON(errorCode(err), err)
         return
     }
 
-    c.JSON(201, response.NewSuccessResponse(user, "201", "User created successfully"))
+    c.JSON(201, response.NewSuccessResponse(user, 201, "User created successfully"))
 }
 
 func (a *AuthHandler) Login(c *gin.Context) {
@@ -53,31 +53,31 @@ func (a *AuthHandler) Login(c *gin.Context) {
 
     user, err := a.service.FindByEmail(req.Email)
     if err != nil {
-        c.JSON(404, err)
+        c.JSON(errorCode(err), err)
         return
     }
 
     if err := isPasswordMatch(user.Password, req.Password); err != nil {
-        c.JSON(401, err)
+        c.JSON(errorCode(err), err)
         return
     }
 
 	token, err := a.jwtService.GenerateToken(user.ID)
 	if err != nil {
 
-		c.JSON(500, err)
+		c.JSON(errorCode(err), err)
 		return
 	}
 
 
-    c.JSON(200, response.NewSuccessResponse(token, "200", "Login successful"))
+    c.JSON(200, response.NewSuccessResponse(token, 200, "Login successful"))
 }
 
 func hashingPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
         return "", &response.AppError{
-            Code: "500",
+            Code: 500,
             Message: "Failed to hash password",
         }
 	}
@@ -87,7 +87,7 @@ func hashingPassword(password string) (string, error) {
 func isPasswordMatch(hashedPassword, password string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
     if err != nil {
-        return response.NewAppError("401", "Invalid credentials")
+        return response.NewAppError(401, "Invalid credentials")
     }
     return nil
 }
@@ -95,7 +95,7 @@ func isPasswordMatch(hashedPassword, password string) error {
 func BindJSON(c *gin.Context, v interface{}) error {
     if err := c.ShouldBindJSON(v); err != nil {
         return &response.AppError{
-            Code:    "400",
+            Code:    400,
             Message: err.Error(),
         }
     }

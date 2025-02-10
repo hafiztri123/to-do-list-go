@@ -20,6 +20,10 @@ func NewTaskService(taskRepo *persistent.TaskRepository, userRepo *persistent.Us
 }
 
 func (s *TaskService) CreateTask(task *entity.Task) error {
+    if task.CategoryID == nil {
+        
+    }
+
 
     if err := s.taskRepo.Create(task); err != nil {
         return response.NewAppError(500, err.Error())
